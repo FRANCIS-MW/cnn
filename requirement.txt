@@ -4,4 +4,7 @@ numpy
 opencv-python
 Pillow
 
+git add requirement.txt
+git commit -m "Fixed TensorFlow installation issue"
+git push origin main
 
