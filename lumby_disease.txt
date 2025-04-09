@@ -1,10 +1,4 @@
-streamlit
+streamlit==1.33.0
 tensorflow==2.15.0
-keras==2.15.0
-numpy
-pandas
-matplotlib
-seaborn
 Pillow
-scikit-learn
-opencv-python
+numpy
