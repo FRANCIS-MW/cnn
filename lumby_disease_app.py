@@ -1,37 +1,45 @@
 import streamlit as st
+import tensorflow as tf
 import numpy as np
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 from PIL import Image
 
-# Load the trained model
-model = load_model("cow_lumpy_disease_model.keras")
-
-# Define class labels
+# Load the class labels
 class_labels = {0: 'healthy', 1: 'lumpy'}
 
-# Define image size
-img_size = (150, 150)
+# Load the quantized TFLite model
+interpreter = tf.lite.Interpreter(model_path="cow_lumpy_disease_model.tflite")
+interpreter.allocate_tensors()
 
-st.title("Cow Lumpy Disease Detection")
-st.write("Upload a cow image to predict whether it has lumpy disease or not.")
+# Get input and output tensors info
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
-# Upload image
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+# Define preprocessing function
+def preprocess_image(image, target_size=(150, 150)):
+    image = image.resize(target_size)
+    image = np.array(image).astype(np.float32) / 255.0
+    image = np.expand_dims(image, axis=0)
+    return image
+
+# Streamlit UI
+st.title("🐄 Cow Lumpy Skin Disease Detection")
+st.write("Upload an image of a cow to check if it has lumpy skin disease.")
+
+uploaded_file = st.file_uploader("Choose a cow image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Display the image
-    img = Image.open(uploaded_file)
-    st.image(img, caption='Uploaded Image', use_column_width=True)
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.write("Analyzing...")
 
-    # Preprocess image
-    img = img.resize(img_size)
-    img_array = image.img_to_array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+    processed_image = preprocess_image(image)
 
-    # Predict
-    prediction = model.predict(img_array)
-    predicted_class = class_labels[np.argmax(prediction)]
+    interpreter.set_tensor(input_details[0]['index'], processed_image)
+    interpreter.invoke()
+    output_data = interpreter.get_tensor(output_details[0]['index'])
 
-    st.success(f"Prediction: **{predicted_class.upper()}**")
-    st.write(f"Confidence: {np.max(prediction) * 100:.2f}%")
+    prediction = np.argmax(output_data)
+    confidence = float(np.max(output_data)) * 100
+
+    st.write(f"🧠 Prediction: **{class_labels[prediction]}**")
+    st.write(f"🔍 Confidence: **{confidence:.2f}%**")
