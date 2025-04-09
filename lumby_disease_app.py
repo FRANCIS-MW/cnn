@@ -3,18 +3,16 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
-# Load the class labels
+# Define labels
 class_labels = {0: 'healthy', 1: 'lumpy'}
 
-# Load the quantized TFLite model
-interpreter = tf.lite.Interpreter(model_path="cow_lumpy_disease_model.tflite")
+# Load TFLite model
+interpreter = tf.lite.Interpreter(model_path="cow_lumpy_disease_model_quant.tflite")
 interpreter.allocate_tensors()
 
-# Get input and output tensors info
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# Define preprocessing function
 def preprocess_image(image, target_size=(150, 150)):
     image = image.resize(target_size)
     image = np.array(image).astype(np.float32) / 255.0
@@ -41,5 +39,5 @@ if uploaded_file is not None:
     prediction = np.argmax(output_data)
     confidence = float(np.max(output_data)) * 100
 
-    st.write(f"🧠 Prediction: **{class_labels[prediction]}**")
-    st.write(f"🔍 Confidence: **{confidence:.2f}%**")
+    st.success(f"🧠 Prediction: **{class_labels[prediction]}**")
+    st.info(f"🔍 Confidence: **{confidence:.2f}%**")
